@@ -1,12 +1,14 @@
 import './App.css';
-import { useState } from 'react';
+import React, {useState} from 'react';
 import axios from 'axios';
 
 const App = () => {
 
-  const [error, setError] = useState(false)
-  const [pokemonName, setPokemonName] = useState("");
-  const [pokemonChosen, setPokemonChosen] = useState(false)
+  const [pokemonName, setPokemonName] = useState("")
+  const [pokemonChosen, setPokemonChosen] = useState(false);
+  const [error, setError] = useState(null)
+  const [loading, setLoading] = useState(false)
+  
   const [pokemon, setPokemon] = useState({
     name: "",
     number: "",
@@ -17,10 +19,14 @@ const App = () => {
     defense: "",
     speed: "",
     type: "",
-  });
+  })
+
 
   const searchPokemon = () => {
+    setLoading(true)
     axios.get(`https://pokeapi.co/api/v2/pokemon/${pokemonName}`).then((res) => {
+      setPokemonChosen(true)
+      setError(false)
       setPokemon({
         name: pokemonName,
         number: res.data.id,
@@ -32,49 +38,46 @@ const App = () => {
         speed: res.data.stats[5].base_stat,
 				type: res.data.types[0].type.name,
       })
-      setPokemonChosen(true)
-      setError(false)
     })
+    .finally(() => setLoading(false))
     .catch((err) => {
-      console.error(err)
+      console.log(err)
       setPokemonChosen(false)
       setError(true)
+      setLoading(false)
     })
   }
-
   return (
     <div className="App">
       <div className="TitleSection">
         <h1>Pokedex</h1>
         <input 
-        type="text"
+        type="text" 
         onChange={(event) => {
           setPokemonName(event.target.value)
         }}
-        value={pokemonName.toLowerCase()} 
-        />
-        {error && (
-          <p>Pokemon no encontrado</p>
-        )}
+        value={pokemonName.toLowerCase()}>
+        </input>
         <button onClick={searchPokemon}>Search</button>
       </div>
-      <div className="DisplaySection">
-        {!pokemonChosen ? (
-          <h1>Please choose Pokemon</h1>
-        ) : (
-          <>
-            <h1>{pokemon.name}</h1>
-            <img src={pokemon.image} alt={pokemon.name} />
-            <h3>Number: #{pokemon.number}</h3>
-            <h3>Species: {pokemon.species}</h3>
-            <h3>Type: {pokemon.type}</h3>
-            <h4>Hp: {pokemon.hp}</h4>
-            <h4>Attack: {pokemon.attack}</h4>
-            <h4>Defense: {pokemon.defense}</h4>
-            <h4>Speed: {pokemon.speed}</h4>
-          </>
-        )}
+      {loading === true ? <h1>Loading...</h1> : 
+      null}
+      {error === false && pokemonChosen && loading === false && (
+      <div className="data">
+        <h1>{pokemon.name}</h1>
+        <img src={pokemon.image} alt={pokemon.name} />
+        <h3>Number: #{pokemon.number}</h3>
+        <h3>Species: {pokemon.species}</h3>
+        <h3>Type: {pokemon.type}</h3>
+        <h4>Hp: {pokemon.hp}</h4>
+        <h4>Attack: {pokemon.attack}</h4>
+        <h4>Defense: {pokemon.defense}</h4>
+        <h4>Speed: {pokemon.speed}</h4>
       </div>
+      )}
+      {error === true && !pokemonChosen && loading === false && (
+        <h1>Pokemon not found</h1>
+      )}
     </div>
   );
 }
